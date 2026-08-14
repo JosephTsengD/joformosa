@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "harness（完整品質閘門）",
+      "type": "shell",
+      "command": "bash tool/harness.sh",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "harness --fast（跳過建置）",
+      "type": "shell",
+      "command": "bash tool/harness.sh --fast",
+      "problemMatcher": []
+    },
+    {
+      "label": "首次驗證（verify_demo）",
+      "type": "shell",
+      "command": "bash tool/verify_demo.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "自動修 lint（dart fix）",
+      "type": "shell",
+      "command": "dart format . && dart fix --apply",
+      "problemMatcher": []
+    }
+  ]
+}

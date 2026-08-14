@@ -1,0 +1,38 @@
+name: joincrew
+description: JoinCrew — 台灣運動社團探索 App（Flutter 三平台）
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"   # 需要 Flutter >= 3.27；建議直接用最新 stable（3.44.x）
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # 狀態管理（刻意不使用 riverpod_generator：專案零 code-gen，clone 後即可執行）
+  # ⚠ 鎖在 2.x。Riverpod 3 對 Ref / Notifier 有破壞性變更，升級需要改碼。
+  flutter_riverpod: ">=2.5.1 <3.0.0"
+  # 宣告式路由 + 深連結（/crews/{slug} 三平台一致）
+  # 用區間而非 ^：本專案只用到 GoRouter/GoRoute/context.go/pathParameters
+  # 這幾個跨大版本穩定的 API，放寬區間可避免與新版 Flutter 的解析衝突。
+  go_router: ">=14.0.0 <17.0.0"
+  # 本地持久化（收藏、離線快取）
+  shared_preferences: ">=2.2.3 <3.0.0"
+  # 後端：Postgres + Auth + Storage + Edge Functions
+  supabase_flutter: ">=2.5.6 <3.0.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ">=4.0.0 <8.0.0"
+  mocktail: ">=1.0.4 <2.0.0"
+
+# ─────────────────────────────────────────────────────────────
+# 以下依賴在啟用對應功能時才需要：
+#   flutter_web_auth_2: ^3.1.2        # LINE Login 的 OAuth 瀏覽器流程
+#   flutter_local_notifications: ^17  # 活動提醒
+#   cached_network_image: ^3.3.1      # 社團封面圖
+# ─────────────────────────────────────────────────────────────
+
+flutter:
+  uses-material-design: true

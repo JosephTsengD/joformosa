@@ -1,0 +1,60 @@
+name: supabase-backup
+
+# ⚠ Supabase 免費方案的備份保留是「零天」。
+#
+# 只要你開始接受真實使用者的資料，沒有備份就是不可接受的風險：
+# 誤刪一張表、migration 寫錯、專案被暫停後還原出問題——資料就沒了。
+#
+# 這支 workflow 每天 pg_dump 一次，存成 GitHub Actions artifact（保留 30 天）。
+# 這不是完整的災難復原方案，但它是「有」與「沒有」的差別。
+#
+# 設定 secret：
+#   SUPABASE_DB_URL  Dashboard → Settings → Database → Connection string (URI)
+#                    格式：postgresql://postgres.xxx:密碼@aws-0-xxx.pooler.supabase.com:5432/postgres
+#
+# ⚠ 這組字串含資料庫密碼，只能放 GitHub Secrets，絕不可進版控。
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 每天 UTC 18:00（台北隔日 02:00，離峰）
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          STAMP=$(date -u +%Y%m%d-%H%M)
+          # --no-owner --no-acl：還原到不同專案時不會因角色不存在而失敗
+          pg_dump "$DB_URL" \
+            --no-owner --no-acl \
+            --exclude-schema='auth|storage|graphql|extensions|realtime|supabase_functions|vault|_realtime|pgbouncer' \
+            -f "backup-$STAMP.sql"
+
+          gzip "backup-$STAMP.sql"
+          ls -lh backup-*.sql.gz
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - name: Verify dump is not empty
+        run: |
+          # 空的備份比沒有備份更危險——它會讓你以為自己有保障
+          SIZE=$(stat -c%s "backup-${STAMP}.sql.gz")
+          echo "備份大小：$SIZE bytes"
+          if [[ "$SIZE" -lt 1024 ]]; then
+            echo "::error::備份檔小於 1KB，幾乎確定是失敗的 dump"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ env.STAMP }}
+          path: backup-*.sql.gz
+          retention-days: 30

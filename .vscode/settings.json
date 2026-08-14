@@ -1,0 +1,52 @@
+{
+  // ── Dart / Flutter ──────────────────────────────────────
+  "dart.flutterSdkPath": null,
+  "dart.lineLength": 90,
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true,
+  // 存檔就跑 analyzer 的 quick fix，等同每次存檔都做一次 dart fix
+  "dart.enableSdkFormatter": true,
+  "dart.showTodos": true,
+  // hot reload 由存檔觸發，不需要手動按 r
+  "dart.flutterHotReloadOnSave": "always",
+  "dart.openDevTools": "flutter",
+  "dart.debugExternalPackageLibraries": false,
+  "dart.debugSdkLibraries": false,
+
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [90],
+    "editor.selectionHighlight": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // ── 讓 Claude Code 與 IDE 看到同一份真相 ──────────────────
+  // 排除建置產物，避免 Claude Code 讀到編譯後的垃圾檔案
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/.fvm": true,
+    "**/.harness": true,
+    "**/*.g.dart": false
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/coverage": true,
+    "**/ios/Pods": true
+  },
+
+  // ── 編輯體驗 ────────────────────────────────────────────
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

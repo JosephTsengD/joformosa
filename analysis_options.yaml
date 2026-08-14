@@ -1,0 +1,42 @@
+include: package:flutter_lints/flutter.yaml
+
+# 行寬設 90 而非預設的 80。
+# CJK 字元在等寬字體下佔兩格，80 欄對中文註解太窄。
+# 這個設定讓 `dart format` CLI 與 .vscode/settings.json 的 lineLength 一致。
+formatter:
+  page_width: 90
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    invalid_annotation_target: ignore
+    todo: warning
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    # ⚠ 刻意「不」啟用 require_trailing_commas。
+    #
+    # Dart 3.7 的新版 tall-style 格式化器會**主動移除**能放在一行的尾隨逗號，
+    # 而這條 lint 卻要求加上。兩者直接衝突（dart_style#1652、dart-lang/sdk#61338），
+    # 結果是死循環：dart fix 加逗號 → dart format 移除 → analyze 再抱怨。
+    #
+    # 尾隨逗號本來的用途是「手動強制換行」，而新格式化器已經自己決定換行，
+    # 這條規則因此失去意義。若真的想保留手動控制，另一條路是在
+    # analysis_options.yaml 加 `formatter: trailing_commas: preserve`
+    # 並同時啟用這條 lint —— 但那等於放棄新格式化器的主要好處。
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - avoid_print
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_locals
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - unawaited_futures
+    - use_super_parameters

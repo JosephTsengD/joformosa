@@ -1,0 +1,8 @@
+{
+  "SUPABASE_URL": "https://YOUR-PROJECT.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_...",
+  "_comment": "舊專案仍可用 SUPABASE_ANON_KEY，兩者擇一即可",
+  "LINE_CHANNEL_ID": "2000000000",
+  "LINE_CALLBACK_SCHEME": "joincrew",
+  "USE_FAKE_BACKEND": false
+}

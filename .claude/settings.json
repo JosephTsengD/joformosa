@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ \"$CLAUDE_FILE_PATH\" == *.dart ]]; then dart format \"$CLAUDE_FILE_PATH\" && flutter analyze \"$CLAUDE_FILE_PATH\"; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash tool/harness.sh --fast"
+          }
+        ]
+      }
+    ]
+  }
+}

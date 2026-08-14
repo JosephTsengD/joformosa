@@ -1,0 +1,65 @@
+name: deploy-web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個部署，新的取代排隊中的舊的
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+
+      - run: flutter pub get
+
+      # base-href 必須是 /儲存庫名稱/，否則所有資源路徑都會 404。
+      # 這是 GitHub Pages 專案站台最常見的部署失敗原因。
+      # publishable key 是公開的（安全邊界是 RLS，見 supabase/migrations/0002_rls.sql），
+      # 但仍放在 Secrets：換專案時只要改一處，不用動程式碼。
+      # 沒有設定 Secrets 時會編譯成空字串，App 自動走本地合成資料。
+      - name: Build web
+        run: |
+          flutter build web --release \
+            --base-href /${{ github.event.repository.name }}/ \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+
+      # ── SPA 深連結的關鍵一步 ────────────────────────────
+      # GitHub Pages 是純靜態伺服器，沒有 rewrite 規則。
+      # 使用者直接開 /crews/dawn-0 時，伺服器找不到那個檔案就回 404。
+      # 解法：把 index.html 複製成 404.html。GitHub Pages 找不到檔案時
+      # 會送出 404.html，Flutter 啟動後由 go_router 接手處理路徑。
+      - name: SPA fallback
+        run: cp build/web/index.html build/web/404.html
+
+      # 沒有這個檔案，GitHub Pages 的 Jekyll 會忽略底線開頭的檔案，
+      # Flutter 的 canvaskit 資源就會消失
+      - name: Disable Jekyll
+        run: touch build/web/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: build/web }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

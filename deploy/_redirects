@@ -1,0 +1,8 @@
+# Cloudflare Pages / Netlify 的 SPA rewrite。
+# 把這個檔案複製到 web/ 資料夾，build 時會被一起打包進 build/web/。
+#
+#   cp deploy/_redirects web/_redirects
+#
+# 意義：任何找不到實體檔案的路徑，都回傳 index.html 且狀態碼 200
+# （不是 302 轉址），讓 go_router 在前端處理 /crews/{slug}。
+/*    /index.html   200

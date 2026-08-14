@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  FLUTTER_VERSION: '3.27.0'
+
+jobs:
+  # 最快失敗優先：靜態檢查 2 分鐘內給答案
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: '${{ env.FLUTTER_VERSION }}', cache: true }
+      - run: flutter pub get
+      - run: dart format --set-exit-if-changed --output=none .
+      - run: flutter analyze --fatal-infos
+      - run: bash tool/check_layering.sh
+      - run: bash tool/check_no_skip.sh
+      - run: bash tool/spec_coverage.sh
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: '${{ env.FLUTTER_VERSION }}', cache: true }
+      - run: flutter pub get
+      - run: flutter test --coverage
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage, path: coverage/lcov.info }
+
+  build-web:
+    runs-on: ubuntu-latest
+    needs: [static, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: '${{ env.FLUTTER_VERSION }}', cache: true }
+      - run: flutter pub get
+      - run: flutter build web --release --base-href /joincrew/
+
+  # macOS runner 是 Linux 的 10 倍計價 → 只在 release 分支與 tag 上跑，
+  # 日常 PR 完全待在免費額度內。
+  build-ios:
+    if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/release/')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: '${{ env.FLUTTER_VERSION }}', cache: true }
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign

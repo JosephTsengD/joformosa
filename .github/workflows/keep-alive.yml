@@ -1,0 +1,39 @@
+name: supabase-keep-alive
+
+# Supabase 免費方案在 7 天無活動後會暫停專案。
+# 對作品集網站來說這是致命的：面試官點開時剛好是第 8 天，就是一片空白。
+#
+# 這支 workflow 每 3 天打一次最輕量的查詢，把計時器歸零。
+# 3 天而非 6 天，是為了留出 GitHub Actions 排程延遲與失敗重試的緩衝。
+#
+# 設定：Repo → Settings → Secrets and variables → Actions → New repository secret
+#   SUPABASE_URL       例：https://xxxxx.supabase.co
+#   SUPABASE_ANON_KEY  匿名金鑰（本來就是公開的，見 docs/DEPLOY.md）
+
+on:
+  schedule:
+    - cron: '0 3 */3 * *'   # 每 3 天 UTC 03:00（台北 11:00）
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          # 只取 1 筆、只要 count，對配額幾乎零消耗
+          code=$(curl -s -o /tmp/out -w '%{http_code}' \
+            -H "apikey: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_ANON_KEY }}" \
+            -H "Range: 0-0" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/cities?select=code")
+
+          echo "HTTP $code"
+          cat /tmp/out
+
+          # 專案被暫停時會回 5xx 或連線失敗，要讓 workflow 紅燈通知你
+          if [[ "$code" != "200" && "$code" != "206" ]]; then
+            echo "::error::Supabase 未正常回應（HTTP $code）。專案可能已被暫停，請到 Dashboard 手動 restore。"
+            exit 1
+          fi
+          echo "Supabase 存活，計時器已歸零"
