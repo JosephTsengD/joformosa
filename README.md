@@ -2,12 +2,6 @@
 
 Flutter 三平台（Android / iOS / Web）單一程式碼庫。
 離線優先、深連結可分享、支援團長自助上稿與 LINE 登入。
-
-> **致敬與聲明**
-> 本專案的產品概念參考自 [joindui.tw](https://joindui.tw)（揪隊）。
-> 這是一個獨立的技術學習專案，與該站**無任何隸屬關係**。
-> 所有資料為程式產生的合成資料，未使用其商標、視覺、文案或資料庫內容。
-
 ---
 
 ## 這個專案想證明什麼
@@ -109,8 +103,6 @@ Harness 包含：格式 · 靜態分析 · **分層規則** · **反跳過測試
 四個角色（architect / designer / engineer / reviewer）定義在 `.claude/agents/`。
 關鍵設計是**資訊隔離**：reviewer 看不到 engineer 的推理過程，只讀 spec、diff
 與 harness 結果，否則它會被「我已經處理了空狀態」這種自述錨定而略過驗證。
-
-完整說明見計劃書第 11 章。
 
 ## Roadmap
 
