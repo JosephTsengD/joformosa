@@ -1,10 +1,10 @@
 // @spec T-042/Scenario-CardStates
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/core/l10n/strings.dart';
-import 'package:joincrew/core/theme/app_theme.dart';
-import 'package:joincrew/features/crew_discovery/domain/entities.dart';
-import 'package:joincrew/features/crew_discovery/presentation/crew_card.dart';
+import 'package:joformosa/core/l10n/strings.dart';
+import 'package:joformosa/core/theme/app_theme.dart';
+import 'package:joformosa/features/crew_discovery/domain/entities.dart';
+import 'package:joformosa/features/crew_discovery/presentation/crew_card.dart';
 
 void main() {
   final now = DateTime(2026, 8, 12, 10);

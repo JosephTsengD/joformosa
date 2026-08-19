@@ -24,7 +24,7 @@ abstract final class AppConfig {
 
   static const lineChannelId = String.fromEnvironment('LINE_CHANNEL_ID');
   static const lineCallbackScheme =
-      String.fromEnvironment('LINE_CALLBACK_SCHEME', defaultValue: 'joincrew');
+      String.fromEnvironment('LINE_CALLBACK_SCHEME', defaultValue: 'joformosa');
 
   /// 強制使用本地合成資料（開發、離線、或後端還沒架好時）
   static const forceFakeBackend =
@@ -34,6 +34,13 @@ abstract final class AppConfig {
   /// 這讓 `flutter run` 在沒有任何設定時仍然可用。
   static bool get hasSupabase =>
       !forceFakeBackend && supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
+
+  /// 示範用的管理員開關（`--dart-define=IS_ADMIN=true`）。
+  ///
+  /// ⚠ 這**不是**安全機制。它只決定前端要不要畫出審核入口；
+  /// 真正的授權在資料庫的 RLS，前端傳什麼都繞不過去。
+  /// 把它當成安全邊界是最典型的前端授權錯誤。
+  static const isDemoAdmin = bool.fromEnvironment('IS_ADMIN');
 
   static bool get hasLineLogin => hasSupabase && lineChannelId.isNotEmpty;
 }

@@ -1,6 +1,6 @@
 // @spec T-060/Scenario-Honeypot
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/features/crew_admin/presentation/submission_guard.dart';
+import 'package:joformosa/features/crew_admin/presentation/submission_guard.dart';
 
 void main() {
   test('honeypot 有值視為機器人', () {

@@ -12,6 +12,7 @@ import '../features/auth/domain/auth_models.dart';
 import '../features/auth/domain/auth_repository.dart';
 import '../features/crew_discovery/data/fake_crew_repository.dart';
 import '../features/crew_discovery/data/local_draft_store.dart';
+import '../features/crew_discovery/data/recent_search_store.dart';
 import '../features/crew_discovery/data/resilient_crew_repository.dart';
 import '../features/crew_discovery/data/supabase_crew_repository.dart';
 import '../features/crew_discovery/domain/crew_repository.dart';
@@ -19,6 +20,8 @@ import '../features/crew_discovery/presentation/crew_list_controller.dart';
 import '../features/crew_discovery/presentation/crew_list_state.dart';
 import '../features/favorites/favorites_controller.dart';
 import '../features/favorites/favorites_repository.dart';
+import '../features/moderation/data/fake_moderation_repository.dart';
+import '../features/moderation/domain/moderation_repository.dart';
 
 /// DI 圖。Riverpod 的 provider 圖等同 Hilt 的 component graph——
 /// 編譯期解析、無反射，心智模型與 Android 幾乎一比一。
@@ -124,6 +127,40 @@ class DemoBannerController extends StateNotifier<bool> {
 
 final demoBannerVisibleProvider = StateNotifierProvider<DemoBannerController, bool>(
   (Ref ref) => DemoBannerController(ref.watch(sharedPrefsProvider)),
+);
+
+final recentSearchStoreProvider = Provider<RecentSearchStore>(
+  (Ref ref) => RecentSearchStore(ref.watch(sharedPrefsProvider)),
+);
+
+class RecentSearchController extends StateNotifier<List<String>> {
+  RecentSearchController(this._store) : super(_store.load());
+
+  final RecentSearchStore _store;
+
+  Future<void> record(String query) async => state = await _store.add(query);
+  Future<void> remove(String query) async => state = await _store.remove(query);
+  Future<void> clear() async {
+    await _store.clear();
+    state = const <String>[];
+  }
+}
+
+final recentSearchProvider = StateNotifierProvider<RecentSearchController, List<String>>(
+  (Ref ref) => RecentSearchController(ref.watch(recentSearchStoreProvider)),
+);
+
+/// 審核用 repository。
+///
+/// `isAdminUser` 由 `--dart-define=IS_ADMIN=true` 開啟，僅供本機與示範。
+/// 真實後端的判斷在 `auth.users.raw_app_meta_data->>'role'`，
+/// 前端拿到什麼都不影響 RLS。
+final moderationRepositoryProvider = Provider<ModerationRepository>(
+  (Ref ref) => FakeModerationRepository(
+    ref.watch(fakeCrewRepositoryProvider),
+    ref.watch(clockProvider),
+    isAdminUser: AppConfig.isDemoAdmin,
+  ),
 );
 
 final crewListProvider = StateNotifierProvider<CrewListController, CrewListState>(

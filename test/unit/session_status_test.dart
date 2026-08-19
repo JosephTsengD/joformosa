@@ -1,6 +1,6 @@
 // @spec T-042/Scenario-SessionStatus
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/features/crew_discovery/domain/entities.dart';
+import 'package:joformosa/features/crew_discovery/domain/entities.dart';
 
 /// 8.3 邊界案例矩陣中「時間」類別的可執行版本。
 /// 注意全程使用固定時間，**沒有任何 DateTime.now()**。

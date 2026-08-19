@@ -41,7 +41,7 @@ Future<void> main() async {
       overrides: <Override>[
         sharedPrefsProvider.overrideWithValue(prefs),
       ],
-      child: const JoinCrewApp(),
+      child: const JoFormosaApp(),
     ),
   );
 }

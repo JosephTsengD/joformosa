@@ -3,7 +3,7 @@
   "configurations": [
     {
       // demo 用這個。啟動最快，且網址列可以直接展示深連結。
-      "name": "JoinCrew (Chrome)",
+      "name": "JoFormosa (Chrome)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
@@ -11,21 +11,21 @@
       "args": ["--web-port", "5555"]
     },
     {
-      "name": "JoinCrew (行動裝置)",
+      "name": "JoFormosa (行動裝置)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart"
     },
     {
       // 效能剖析用。要看 jank 或掉幀時開這個，不要用 debug 模式量效能。
-      "name": "JoinCrew (Profile)",
+      "name": "JoFormosa (Profile)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "flutterMode": "profile"
     },
     {
-      "name": "JoinCrew (真實 Supabase 後端)",
+      "name": "JoFormosa (真實 Supabase 後端)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",

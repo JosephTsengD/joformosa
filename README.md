@@ -1,4 +1,4 @@
-# JoinCrew — 台灣運動社團探索 App
+# 揪Formosa · JoFormosa — 台灣運動社團探索 App
 
 Flutter 三平台（Android / iOS / Web）單一程式碼庫。
 離線優先、深連結可分享、支援團長自助上稿與 LINE 登入。
@@ -31,9 +31,11 @@ Flutter 三平台（Android / iOS / Web）單一程式碼庫。
 
 1. **[`INSTALL.md`](INSTALL.md)** — 安裝 Flutter 環境（第一次接觸 Flutter 從這裡開始）
 2. **[`RUNBOOK.md`](RUNBOOK.md)** — 建置、執行、測試、demo 腳本、疑難排解
-3. **[`docs/TEST_AUDIT.md`](docs/TEST_AUDIT.md)** — 自我審查報告與已知風險
-4. **[`docs/DEPLOY.md`](docs/DEPLOY.md)** — 部署上線（GitHub Pages / Cloudflare / 家用網路）
-5. **[`docs/PRODUCTION.md`](docs/PRODUCTION.md)** — 開放真實使用者前的檢查清單
+3. **[`docs/ROADMAP.md`](docs/ROADMAP.md)** — 產品路線圖與任務規格
+4. **[`docs/BRANCHING.md`](docs/BRANCHING.md)** — 分支策略與提交規範
+5. **[`docs/TEST_AUDIT.md`](docs/TEST_AUDIT.md)** — 自我審查報告與已知風險
+6. **[`docs/DEPLOY.md`](docs/DEPLOY.md)** — 部署上線（GitHub Pages / Cloudflare / 家用網路）
+7. **[`docs/PRODUCTION.md`](docs/PRODUCTION.md)** — 開放真實使用者前的檢查清單
 
 ## 兩種執行模式
 
@@ -100,7 +102,7 @@ bash tool/harness.sh --fast   # 跳過建置
 Harness 包含：格式 · 靜態分析 · **分層規則** · **反跳過測試** ·
 單元測試 · **spec 覆蓋率**。exit code 就是「完成」的定義。
 
-`tool/spec_coverage.sh` 是這套流程的關鍵：它解析 `docs/tasks/*.spec.md` 中
+`tool/spec_coverage.py` 是這套流程的關鍵：它解析 `docs/tasks/*.spec.md` 中
 每一條 `Scenario:`，檢查 `test/` 裡是否有 `// @spec {id}/Scenario-{name}`
 標記的測試。少一條就 fail——驗收條件與測試之間有機器可驗證的連結。
 

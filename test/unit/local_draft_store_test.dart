@@ -1,11 +1,11 @@
 // @spec T-060/Scenario-DemoPersistence
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/core/utils/clock.dart';
-import 'package:joincrew/core/utils/result.dart';
-import 'package:joincrew/features/crew_discovery/data/fake_crew_repository.dart';
-import 'package:joincrew/features/crew_discovery/data/local_draft_store.dart';
-import 'package:joincrew/features/crew_discovery/domain/crew_repository.dart';
-import 'package:joincrew/features/crew_discovery/domain/entities.dart';
+import 'package:joformosa/core/utils/clock.dart';
+import 'package:joformosa/core/utils/result.dart';
+import 'package:joformosa/features/crew_discovery/data/fake_crew_repository.dart';
+import 'package:joformosa/features/crew_discovery/data/local_draft_store.dart';
+import 'package:joformosa/features/crew_discovery/domain/crew_repository.dart';
+import 'package:joformosa/features/crew_discovery/domain/entities.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

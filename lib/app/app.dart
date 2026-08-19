@@ -5,18 +5,18 @@ import '../core/theme/app_theme.dart';
 import 'providers.dart';
 import 'router.dart';
 
-class JoinCrewApp extends ConsumerWidget {
-  const JoinCrewApp({super.key});
+class JoFormosaApp extends ConsumerWidget {
+  const JoFormosaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'JoinCrew',
+      title: 'JoFormosa',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
       builder: (BuildContext context, Widget? child) {
         // 支援字級縮放到 2.0，但設上限避免極端值破版（a11y 折衷）
         final scaler = MediaQuery.textScalerOf(context).clamp(

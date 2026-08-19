@@ -1,12 +1,12 @@
 // @spec T-042/Scenario-Degradation
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/core/utils/clock.dart';
-import 'package:joincrew/core/utils/failure.dart';
-import 'package:joincrew/core/utils/result.dart';
-import 'package:joincrew/features/crew_discovery/data/fake_crew_repository.dart';
-import 'package:joincrew/features/crew_discovery/data/resilient_crew_repository.dart';
-import 'package:joincrew/features/crew_discovery/domain/crew_repository.dart';
-import 'package:joincrew/features/crew_discovery/domain/entities.dart';
+import 'package:joformosa/core/utils/clock.dart';
+import 'package:joformosa/core/utils/failure.dart';
+import 'package:joformosa/core/utils/result.dart';
+import 'package:joformosa/features/crew_discovery/data/fake_crew_repository.dart';
+import 'package:joformosa/features/crew_discovery/data/resilient_crew_repository.dart';
+import 'package:joformosa/features/crew_discovery/domain/crew_repository.dart';
+import 'package:joformosa/features/crew_discovery/domain/entities.dart';
 
 /// 永遠以指定失敗回應的 repository，用來模擬後端各種故障。
 class _AlwaysFailing implements CrewRepository {

@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:joincrew/app/providers.dart';
-import 'package:joincrew/core/l10n/strings.dart';
-import 'package:joincrew/core/theme/app_theme.dart';
-import 'package:joincrew/core/utils/clock.dart';
-import 'package:joincrew/features/crew_admin/presentation/register_crew_screen.dart';
-import 'package:joincrew/features/crew_discovery/data/fake_crew_repository.dart';
+import 'package:joformosa/app/providers.dart';
+import 'package:joformosa/core/l10n/strings.dart';
+import 'package:joformosa/core/theme/app_theme.dart';
+import 'package:joformosa/core/utils/clock.dart';
+import 'package:joformosa/features/crew_admin/presentation/register_crew_screen.dart';
+import 'package:joformosa/features/crew_discovery/data/fake_crew_repository.dart';
 
 void main() {
   const s = Strings('zh-Hant');

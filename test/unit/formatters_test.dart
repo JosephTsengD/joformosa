@@ -1,7 +1,7 @@
 // @spec T-042/Scenario-RelativeTime
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/core/l10n/strings.dart';
-import 'package:joincrew/core/utils/formatters.dart';
+import 'package:joformosa/core/l10n/strings.dart';
+import 'package:joformosa/core/utils/formatters.dart';
 
 void main() {
   const tf = TimeFormatter(Strings('zh-Hant'));

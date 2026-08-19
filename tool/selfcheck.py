@@ -20,6 +20,12 @@ LIB = ROOT / 'lib'
 TEST = ROOT / 'test'
 problems = collections.defaultdict(list)
 
+# 套件名稱從 pubspec 讀取，不要寫死。
+# 專案改名時（joincrew → joformosa）寫死的字串會讓檢查器整組失效，
+# 而且失敗訊息會指向一堆「未 import」的假警報，非常難判斷真因。
+PKG = re.search(r'^name:\s*(\w+)', (ROOT / 'pubspec.yaml').read_text(), re.M).group(1)
+PKG_PREFIX = f'package:{PKG}/'
+
 
 def strip_code(src):
     """移除註解與字串內容，保留結構字元。"""
@@ -90,8 +96,8 @@ for p in dart_files:
     src = p.read_text()
     for m in re.finditer(r"import\s+'([^']+)'", src):
         path = m.group(1)
-        if path.startswith('package:joincrew/'):
-            target = LIB / path[len('package:joincrew/'):]
+        if path.startswith(PKG_PREFIX):
+            target = LIB / path[len(PKG_PREFIX):]
             key = 'C3'
         elif path.startswith(('dart:', 'package:')):
             continue
@@ -103,12 +109,23 @@ for p in dart_files:
 
 # ── C4 未 import 的專案型別（啟發式）─────────────────────
 declared = {}          # 型別名 -> 定義檔
+top_level = {}         # 頂層函式／變數名 -> 定義檔
 for p in LIB.rglob('*.dart'):
+    _src = strip_code(p.read_text())
     for m in re.finditer(r'^(?:abstract\s+|final\s+|sealed\s+|base\s+|interface\s+)*'
-                         r'(?:class|enum|mixin|extension)\s+(\w+)', strip_code(p.read_text()), re.M):
+                         r'(?:class|enum|mixin|extension)\s+(\w+)', _src, re.M):
         name = m.group(1)
         if not name.startswith('_'):
             declared.setdefault(name, p)
+
+    # 頂層函式與變數也要收。
+    # 漏掉這一類的後果：呼叫一個沒有 import 的頂層函式時，
+    # 所有檢查都會通過、卻在編譯時才失敗——這正是 locationForFilter 的情況。
+    _reserved = {'if', 'for', 'while', 'switch', 'return', 'catch', 'assert', 'void'}
+    for m in re.finditer(r'^(?:[\w<>,?\[\]]+)\s+(\w+)\s*\(', _src, re.M):
+        name = m.group(1)
+        if not name.startswith('_') and name not in _reserved:
+            top_level.setdefault(name, p)
 
 for p in dart_files:
     src = p.read_text()
@@ -116,14 +133,31 @@ for p in dart_files:
     imported = set()
     for m in re.finditer(r"import\s+'([^']+)'", src):
         path = m.group(1)
-        if path.startswith('package:joincrew/'):
-            imported.add((LIB / path[len('package:joincrew/'):]).resolve())
+        if path.startswith(PKG_PREFIX):
+            imported.add((LIB / path[len(PKG_PREFIX):]).resolve())
         elif not path.startswith(('dart:', 'package:')):
             imported.add((p.parent / path).resolve())
     self_declared = set(re.findall(
         r'^(?:abstract\s+|final\s+|sealed\s+|base\s+|interface\s+)*'
         r'(?:class|enum|mixin|extension)\s+(\w+)', src, re.M))
     used = set(re.findall(r'\b([A-Z]\w+)\b', body))
+    # 頂層函式／變數：小寫開頭，用法是 name( 或裸識別字
+    # 只認呼叫形式 name(——裸識別字會把區域變數也算進來
+    used_lower = set(re.findall(r'(?<![\w.])([a-z]\w*)\s*\(', body))
+    self_top = set(re.findall(r'^(?:[\w<>,?\[\]]+)\s+(\w+)\s*\(', body, re.M))
+    # 同名的區域變數不算（final router = GoRouter.of(context) 之類）
+    local_names = set(re.findall(r'\b(?:final|const|var|late)\s+(?:[\w<>,?\[\]]+\s+)?(\w+)\s*=',
+                                 body))
+    self_top |= local_names
+    for name in sorted(used_lower):
+        if name in self_top or name not in top_level:
+            continue
+        if top_level[name].resolve() == p.resolve():
+            continue
+        if top_level[name].resolve() not in imported:
+            problems['C4'].append(
+                f'{p} 使用頂層符號 {name}()，但未 import {top_level[name]}')
+
     for name in sorted(used):
         if name in self_declared or name not in declared:
             continue
@@ -194,15 +228,19 @@ for p in TEST.rglob('*.dart'):
 # 判斷方式：該檔案匯出的公開型別名稱有沒有出現在使用端。
 for p in dart_files:
     src = p.read_text()
-    body = strip_code(''.join(l + '\n' for l in src.splitlines()
-                         if not l.startswith('import ')))
+    # 用原始碼而非 strip_code：識別字可能只出現在字串內插裡
+    # （'${TimeFormatter.md(x)}'），而 strip_code 會把字串內容整段移除，
+    # 造成「有用到卻被判為未使用」的誤報。
+    # 這個檢查是 MINOR，寧可漏報也不要誤報——誤報會讓人開始忽略它。
+    body = ''.join(l + '\n' for l in src.splitlines()
+                   if not l.startswith('import '))
     for line in src.splitlines():
         m = re.match(r"import\s+'([^']+)'\s*;\s*$", line)
         if not m:
             continue
         path = m.group(1)
-        if path.startswith('package:joincrew/'):
-            target = LIB / path[len('package:joincrew/'):]
+        if path.startswith(PKG_PREFIX):
+            target = LIB / path[len(PKG_PREFIX):]
         elif path.startswith(('dart:', 'package:')):
             continue
         else:
@@ -229,6 +267,26 @@ for p in dart_files:
         if not any(re.search(rf'\b{n}\b', body) for n in names):
             problems['C9'].append(f'{p} → {path} 沒有用到任何東西')
 
+# ── C10 頂層可變單例 ─────────────────────────────────────
+# `final router = GoRouter(...)` 這種寫法看起來無害，但它是全域可變狀態：
+# 整個 process 共用一份。實際後果是測試「單獨跑會過、一起跑會失敗」，
+# 而且失敗與否取決於執行順序——這是最難查的一類 bug。
+#
+# 只列舉已知會持有狀態的型別，不做通用判斷（那會噪音過大）。
+STATEFUL_SINGLETONS = {
+    'GoRouter', 'StreamController', 'ValueNotifier', 'ChangeNotifier',
+    'Timer', 'HttpClient', 'Database',
+}
+for p in LIB.rglob('*.dart'):
+    src = strip_code(p.read_text())
+    for m in re.finditer(r'^(?:final|late\s+final|var)\s+(?:[\w<>,?\[\]]+\s+)?(\w+)\s*=\s*(\w+)\s*[(.]',
+                         src, re.M):
+        name, ctor = m.group(1), m.group(2)
+        if ctor in STATEFUL_SINGLETONS:
+            problems['C10'].append(
+                f'{p}:{src.count(chr(10), 0, m.start()) + 1} 頂層 `{name} = {ctor}(...)` '
+                f'是全域可變狀態 —— 改用 Provider 讓每個 scope 各自持有')
+
 # ── 輸出 ────────────────────────────────────────────────
 LABEL = {
   'C1': ('BLOCKER', '括號 / 引號不平衡'),
@@ -242,6 +300,7 @@ LABEL = {
   # 非阻斷：flutter analyze 的 unused_import 才是權威，
   # 這裡只是在沒有 analyzer 的環境提供早期提示。
   'C9': ('MINOR', '未使用的專案 import'),
+  'C10': ('BLOCKER', '頂層可變單例'),
 }
 blockers = 0
 print(f'掃描 {len(dart_files)} 個 Dart 檔\n')
