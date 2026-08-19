@@ -38,7 +38,7 @@ run checker_mt blocker python3 tool/test_typecheck.py
 
 echo "▸ 測試"
 run unit      blocker flutter test --coverage
-run spec_cov  blocker tool/spec_coverage.sh
+run spec_cov  blocker python3 tool/spec_coverage.py
 
 if [[ $FAST -eq 0 ]]; then
   echo "▸ 建置"

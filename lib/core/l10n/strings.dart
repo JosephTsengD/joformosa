@@ -8,7 +8,10 @@ class Strings {
 
   bool get _zh => locale.startsWith('zh');
 
-  String get appName => 'JoinCrew';
+  /// 品牌名：中文「揪Formosa」，英文「JoFormosa」。
+  /// 中文語境保留 Formosa 的原字，不譯成「福爾摩沙」——
+  /// 前者是刻意的混語品牌，後者只是音譯。
+  String get appName => _zh ? '揪Formosa' : 'JoFormosa';
   String get tagline => _zh ? '運動找隊？來揪隊。' : 'Find your sports crew.';
 
   String get navDiscover => _zh ? '探索' : 'Discover';
@@ -20,6 +23,16 @@ class Strings {
   String get sportRide => _zh ? '自行車' : 'Ride';
   String get sportHyrox => 'HYROX';
   String get sportOther => _zh ? '其他' : 'Other';
+
+  String get searchHint => _zh ? '搜尋社團名稱、地點、風格' : 'Search crews, places, styles';
+  String get searchClear => _zh ? '清除搜尋' : 'Clear search';
+  String get searchRecent => _zh ? '最近搜尋' : 'Recent';
+  String get searchRecentClear => _zh ? '清除紀錄' : 'Clear history';
+  String searchEmptyTitle(String q) => _zh ? '找不到「$q」' : 'No results for “$q”';
+  String get searchEmptyHint => _zh
+      ? '試試看社團名稱的一部分，或改用縣市與風格篩選。'
+      : 'Try part of the name, or filter by city and style.';
+  String get searchCancel => _zh ? '取消' : 'Cancel';
 
   String get filterCity => _zh ? '縣市' : 'City';
   String get filterStyle => _zh ? '風格' : 'Style';
@@ -135,6 +148,24 @@ class Strings {
       _zh ? '將清除你在此裝置建立的社團與活動，確定嗎？' : 'Clear everything you created on this device?';
   String get demoResetDone => _zh ? '已回到初始狀態' : 'Reset to initial state';
   String get demoDismiss => _zh ? '知道了' : 'Got it';
+
+  String get moderationTitle => _zh ? '審核佇列' : 'Review queue';
+  String get moderationEmpty => _zh ? '沒有待審核的社團' : 'Nothing to review';
+  String get moderationEmptyHint =>
+      _zh ? '使用者送出的社團會出現在這裡，核准後才會進入公開列表。' : 'Submissions appear here.';
+  String get moderationForbidden => _zh ? '沒有存取權限' : 'Access denied';
+  String get moderationForbiddenHint =>
+      _zh ? '這個頁面僅限管理員。若你認為這是錯誤，請聯繫平台。' : 'Admins only.';
+  String get moderationApprove => _zh ? '核准' : 'Approve';
+  String get moderationReject => _zh ? '拒絕' : 'Reject';
+  String get moderationReason => _zh ? '拒絕理由' : 'Reason';
+  String get moderationReasonRequired =>
+      _zh ? '拒絕時必須填寫理由，送出者會看到它' : 'A reason is required';
+  String get moderationApproved => _zh ? '已核准並發布' : 'Approved and published';
+  String get moderationRejected => _zh ? '已拒絕' : 'Rejected';
+  String get moderationAudit => _zh ? '稽核紀錄' : 'Audit log';
+  String get moderationAuditEmpty => _zh ? '尚無紀錄' : 'No entries yet';
+  String moderationPendingCount(int n) => _zh ? '待審核 $n' : '$n pending';
 
   String get kindRegular => _zh ? '一般團練' : 'Regular';
   String get kindSpecial => _zh ? '特別活動' : 'Special';

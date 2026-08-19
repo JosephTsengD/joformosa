@@ -25,6 +25,12 @@ LIB = ROOT / 'lib'
 TEST = ROOT / 'test'
 problems = collections.defaultdict(list)
 
+# 套件名稱從 pubspec 讀取，不要寫死。
+# 專案改名時（joincrew → joformosa）寫死的字串會讓檢查器整組失效，
+# 而且失敗訊息會指向一堆「未 import」的假警報，非常難判斷真因。
+PKG = re.search(r'^name:\s*(\w+)', (ROOT / 'pubspec.yaml').read_text(), re.M).group(1)
+PKG_PREFIX = f'package:{PKG}/'
+
 
 # ── 前處理：移除註解與字串內容 ────────────────────────────
 def strip_code(src: str) -> str:
@@ -478,8 +484,8 @@ for p in files:
     for m in re.finditer(r"import\s+'([^']+)'", raw):
         path = m.group(1)
         target = None
-        if path.startswith('package:joincrew/'):
-            target = (LIB / path[len('package:joincrew/'):]).resolve()
+        if path.startswith(PKG_PREFIX):
+            target = (LIB / path[len(PKG_PREFIX):]).resolve()
         elif not path.startswith(('dart:', 'package:')):
             target = (p.parent / path).resolve()
         if target is None:

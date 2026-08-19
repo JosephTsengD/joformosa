@@ -208,48 +208,54 @@ class EmptyStateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(Space.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: c.accentSubtle,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 32, color: c.accentPrimary),
-            ),
-            const SizedBox(height: Space.lg),
-            Text(title, style: AppText.subtitle.copyWith(color: c.textPrimary)),
-            const SizedBox(height: Space.sm),
-            Text(
-              hint,
-              textAlign: TextAlign.center,
-              style: AppText.body.copyWith(color: c.textSecondary),
-            ),
-            if (actionLabel != null && onAction != null) ...<Widget>[
-              const SizedBox(height: Space.xl),
-              FilledButton(
-                onPressed: onAction,
-                style: FilledButton.styleFrom(
-                  backgroundColor: c.accentPrimary,
-                  foregroundColor: c.textOnAccent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Space.xl,
-                    vertical: Space.md + 2,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(Radii.md),
-                  ),
+    // 內容高度不固定：標題與提示會因語言、字級而變，
+    // 而可用高度會因裝置、橫向、鍵盤彈出而變。
+    // 兩邊都會動的時候，唯一安全的做法是讓它可捲動——
+    // 空間夠時 Center 讓它置中，不夠時變成捲動而不是紅色溢位條。
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(Space.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: c.accentSubtle,
+                  shape: BoxShape.circle,
                 ),
-                child: Text(actionLabel!, style: AppText.bodyStrong),
+                child: Icon(icon, size: 32, color: c.accentPrimary),
               ),
+              const SizedBox(height: Space.lg),
+              Text(title, style: AppText.subtitle.copyWith(color: c.textPrimary)),
+              const SizedBox(height: Space.sm),
+              Text(
+                hint,
+                textAlign: TextAlign.center,
+                style: AppText.body.copyWith(color: c.textSecondary),
+              ),
+              if (actionLabel != null && onAction != null) ...<Widget>[
+                const SizedBox(height: Space.xl),
+                FilledButton(
+                  onPressed: onAction,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: c.accentPrimary,
+                    foregroundColor: c.textOnAccent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Space.xl,
+                      vertical: Space.md + 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                    ),
+                  ),
+                  child: Text(actionLabel!, style: AppText.bodyStrong),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

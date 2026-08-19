@@ -1,5 +1,7 @@
 name: deploy-web
 
+# 只從 main 部署。dev 上的東西還沒被驗證過，
+# 讓它自動上線等於取消了 main 的意義。
 on:
   push:
     branches: [main]

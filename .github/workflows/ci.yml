@@ -2,8 +2,9 @@ name: ci
 
 on:
   pull_request:
+    branches: [main, dev]
   push:
-    branches: [main]
+    branches: [main, dev]
 
 env:
   FLUTTER_VERSION: '3.27.0'
@@ -21,7 +22,7 @@ jobs:
       - run: flutter analyze --fatal-infos
       - run: bash tool/check_layering.sh
       - run: bash tool/check_no_skip.sh
-      - run: bash tool/spec_coverage.sh
+      - run: python3 tool/spec_coverage.py
 
   test:
     runs-on: ubuntu-latest

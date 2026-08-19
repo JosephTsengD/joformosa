@@ -101,7 +101,7 @@ flutter --version
 之後在專案資料夾裡可以鎖版本:
 
 ```bash
-cd joincrew
+cd joformosa
 fvm use stable      # 產生 .fvmrc,團隊成員版本一致
 ```
 
@@ -355,7 +355,7 @@ brew install --cask visual-studio-code    # Homebrew 會自動選對架構
 
 ```bash
 npm install -g @anthropic-ai/claude-code
-cd joincrew
+cd joformosa
 claude
 ```
 

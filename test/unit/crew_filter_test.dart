@@ -1,6 +1,6 @@
 // @spec T-042/Scenario-FilterUrlSync
 import 'package:flutter_test/flutter_test.dart';
-import 'package:joincrew/features/crew_discovery/domain/entities.dart';
+import 'package:joformosa/features/crew_discovery/domain/entities.dart';
 
 void main() {
   test('篩選狀態 ↔ URL query 可雙向轉換（Web 可分享搜尋結果）', () {

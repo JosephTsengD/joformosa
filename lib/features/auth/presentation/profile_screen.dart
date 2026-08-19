@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
+import '../../moderation/presentation/moderation_controller.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -85,6 +86,9 @@ class ProfileScreen extends ConsumerWidget {
               () => context.go('/favorites')),
           _tile(context, Icons.groups_rounded, s.adminTitle, null,
               () => context.go('/admin')),
+          if (ref.watch(moderationProvider) is! ModerationForbidden)
+            _tile(context, Icons.rule_rounded, s.moderationTitle, null,
+                () => context.go('/moderation')),
           _tile(
             context,
             Icons.brightness_6_rounded,

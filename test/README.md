@@ -9,4 +9,4 @@
 rm -f test/widget_test.dart
 ```
 
-本專案的入口測試是 `test/smoke_test.dart`，它啟動真正的 `JoinCrewApp`。
+本專案的入口測試是 `test/smoke_test.dart`，它啟動真正的 `JoFormosaApp`。

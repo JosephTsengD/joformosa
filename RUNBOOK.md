@@ -1,4 +1,4 @@
-# JoinCrew 建置與運行手冊
+# 揪Formosa 建置與運行手冊
 
 寫給第一次接手這個專案的人。假設你有一台 Mac、裝過 Homebrew，其他都不假設。
 
@@ -72,8 +72,8 @@ flutter devices       # 至少列出 Chrome
 ### 3.1 解壓縮
 
 ```bash
-unzip joincrew-flutter.zip
-cd joincrew
+unzip joformosa-flutter.zip
+cd joformosa
 ```
 
 ### 3.2 產生平台資料夾（**這步不能跳過**）
@@ -85,7 +85,7 @@ Xcode 版本綁定。我先寫死一份給你，反而會因為版本不合而�
 讓 `flutter create` 依你的環境現場產生，才是對的做法。
 
 ```bash
-flutter create . --org tw.joincrew --project-name joincrew \
+flutter create . --org tw.joformosa --project-name joformosa \
   --platforms=android,ios,web
 ```
 
@@ -166,7 +166,7 @@ flutter devices
 
 畫面上應該看到：
 
-- 標題 `JoinCrew`，副標寫「今天有 N 場團練」
+- 標題 `揪Formosa`，副標寫「今天有 N 場團練」
 - 一排運動 chip：全部 / 跑步 / 自行車 / HYROX / 其他
 - 幾張社團卡片，左側有彩色條，右上角有橘色積分
 
@@ -275,7 +275,7 @@ brew install supabase/tap/supabase
 # 需要 Docker Desktop 正在執行
 
 # 2. 啟動本地 Supabase
-cd joincrew
+cd joformosa
 supabase start          # 第一次會拉映像檔，約 5 分鐘
 supabase db reset       # 套用 supabase/migrations/ 的四個 SQL
 

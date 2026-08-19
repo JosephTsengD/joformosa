@@ -7,10 +7,10 @@
 （它們有數百個檔案，且與你的本機環境綁定）。
 
 ```bash
-unzip joincrew.zip && cd joincrew
+unzip joformosa.zip && cd joformosa
 
 # 讓 Flutter 產生平台資料夾（不會覆蓋既有的 lib/ 與 pubspec.yaml）
-flutter create . --org tw.joincrew --project-name joincrew \
+flutter create . --org tw.joformosa --project-name joformosa \
   --platforms=android,ios,web
 
 flutter pub get
@@ -39,7 +39,7 @@ bash tool/harness.sh --fast
 
 ```bash
 git init && git add -A
-git commit -m "feat: initial JoinCrew skeleton with AI workflow harness"
+git commit -m "feat: initial 揪Formosa skeleton with AI workflow harness"
 gh repo create joincrew --public --source=. --push
 ```
 
@@ -48,7 +48,7 @@ CI 會自動跑 `.github/workflows/ci.yml`。
 ## 5. 接上 LINE 登入（需要時）
 
 1. 到 LINE Developers Console 建立 Provider 與 **LINE Login channel**
-2. Callback URL 填 `joincrew://login-callback`（與 `env/dev.json` 的
+2. Callback URL 填 `joformosa://login-callback`（與 `env/dev.json` 的
    `LINE_CALLBACK_SCHEME` 一致）
 3. 部署 Edge Function：
    ```bash

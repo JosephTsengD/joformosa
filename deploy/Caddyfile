@@ -5,10 +5,10 @@
 #   brew install caddy
 #   caddy run --config deploy/Caddyfile
 #
-# 把 joincrew.example.com 換成你的網域。
+# 把 joformosa.example.com 換成你的網域。
 # 走 Cloudflare Tunnel 時網域由 Cloudflare 處理，這裡改用 :8080 即可。
 
-joincrew.example.com {
+joformosa.example.com {
     root * ../build/web
     encode gzip zstd
 

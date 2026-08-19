@@ -1,4 +1,4 @@
-# 把 JoinCrew 放到網路上
+# 把 揪Formosa 放到網路上
 
 Flutter web build 出來是**純靜態檔案**（HTML / JS / WASM / 圖片），沒有伺服器端程式。
 理解這件事就能理解為什麼下面的建議是這樣排的。
@@ -29,10 +29,10 @@ Flutter web build 出來是**純靜態檔案**（HTML / JS / WASM / 圖片），
 專案已附 `.github/workflows/deploy-web.yml`，推上去就會自動建置部署。
 
 ```bash
-cd joincrew
+cd joformosa
 git init
 git add -A
-git commit -m "feat: JoinCrew Flutter portfolio project"
+git commit -m "feat: 揪Formosa Flutter portfolio project"
 gh repo create joincrew --public --source=. --push
 ```
 
@@ -41,22 +41,22 @@ gh repo create joincrew --public --source=. --push
 推上 `main` 之後約三分鐘，網址是：
 
 ```
-https://<你的帳號>.github.io/joincrew/
+https://<你的帳號>.github.io/joformosa/
 ```
 
 ### workflow 裡三個非做不可的步驟
 
 這三件事漏掉任何一個，部署都會「成功」但網站是壞的 —— 而且錯誤訊息完全不會告訴你原因。
 
-**① `--base-href /joincrew/`**
+**① `--base-href /joformosa/`**
 
 GitHub Pages 的專案站台不在網域根目錄。不設 base-href 的話，
-`index.html` 會去 `/main.dart.js` 找檔案，但實際位置是 `/joincrew/main.dart.js`。
+`index.html` 會去 `/main.dart.js` 找檔案，但實際位置是 `/joformosa/main.dart.js`。
 結果是白畫面，Console 一堆 404。
 
 **② 把 `index.html` 複製成 `404.html`**
 
-這是 SPA 部署最常見的坑。使用者直接開 `https://.../joincrew/crews/dawn-0`
+這是 SPA 部署最常見的坑。使用者直接開 `https://.../joformosa/crews/dawn-0`
 （例如你把連結貼給面試官），伺服器去找 `crews/dawn-0` 這個檔案，找不到就回 404。
 
 GitHub Pages 沒有 rewrite 規則，但它找不到檔案時會送 `404.html`。
@@ -125,7 +125,7 @@ Cloudflare Pages 的建置環境沒有內建 Flutter，需要在 build command �
 
 ```bash
 # 1. 建置與本機伺服器
-cd joincrew
+cd joformosa
 flutter build web --release
 brew install caddy
 caddy run --config deploy/Caddyfile      # 先把 Caddyfile 的網域改成 :8080
@@ -135,12 +135,12 @@ brew install cloudflared
 cloudflared tunnel login                  # 瀏覽器會開起來，選你的網域
 
 # 3. 建立通道並指向本機服務
-cloudflared tunnel create joincrew
-cloudflared tunnel route dns joincrew joincrew.你的網域.com
-cloudflared tunnel run --url http://localhost:8080 joincrew
+cloudflared tunnel create joformosa
+cloudflared tunnel route dns joformosa joformosa.你的網域.com
+cloudflared tunnel run --url http://localhost:8080 joformosa
 ```
 
-開 `https://joincrew.你的網域.com` 就會看到網站。
+開 `https://joformosa.你的網域.com` 就會看到網站。
 
 Cloudflare 現在也支援在儀表板上遠端管理通道（Zero Trust → Networks → Tunnels），
 設定存在雲端、本機只需要一組 token，省去維護本地 config 的麻煩。

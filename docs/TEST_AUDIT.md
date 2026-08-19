@@ -242,6 +242,113 @@ RLS policy 單獨看每一條都正確，但組合起來少了一個情境：
 的環境提供早期提示。**用自製工具去複製一個既有工具做得更好的事，
 只會製造噪音。** 自建檢查器的價值在補足空白，不在重疊。
 
+## 第七輪：改名與 T-070 實作
+
+| 編號 | 問題 | 修正 |
+|---|---|---|
+| M-18 | `smoke_test` 硬編 `'JoinCrew'` 字面值，改名即壞 | 改用 `s.appName` |
+| M-19 | `selfcheck.py` / `typecheck.py` 寫死 `package:joincrew/`，改名後噴 81 個假警報 | 改為從 `pubspec.yaml` 讀取 |
+| M-20 | `crews_search_idx` 用 `to_tsvector('simple')`，**不會斷中文詞** | 改用 `pg_trgm` 三元組相似度 |
+
+### M-18 的意義
+
+「widget 中不得硬編使用者可見字串」這條規則，**連測試也適用**。
+測試裡寫 `find.text('JoinCrew')` 看起來無害，但它讓改名這件事
+從「改一個常數」變成「找出所有散落的字面值」。
+
+### M-19：檢查器自己也會腐爛
+
+寫死套件名稱的後果特別嚴重：失敗訊息是 81 個「未 import 的型別」，
+完全看不出真因是改名。**基礎設施的錯誤訊息品質，比功能程式碼更重要**——
+功能壞了你知道要看哪裡，工具壞了你會先懷疑自己。
+
+### M-20：只有寫搜尋功能才會發現的缺陷
+
+Postgres 的 `to_tsvector('simple')` 不斷中文詞，整串當一個 token，
+所以搜「夜跑」找不到「信義夜跑團」。這個索引從 `0001_init.sql` 就存在，
+但在實作搜尋之前完全不會被觸發。
+
+**規格驅動的價值在這裡：** T-070 的 Scenario 逼出了一個
+存在已久但沒人發現的後端缺陷。
+
+## 第八輪：T-076 與檢查器的兩個盲點
+
+| 編號 | 嚴重度 | 問題 | 修正 |
+|---|---|---|---|
+| M-21 | **BLOCKER** | `discovery_screen` 呼叫 `locationForFilter()`，但該函式在 `router.dart` 且未被 import。**所有檢查全綠、卻編譯失敗** | 把行為移進 `CrewFilter.toLocation()`；C4 擴充到頂層函式 |
+| M-22 | BLOCKER | `spec_coverage.sh` 在 macOS 報 `id?: unbound variable` | 整支改寫為 `spec_coverage.py` |
+| M-23 | MINOR | C9 把字串內插中的 `TimeFormatter` 判為未使用 | 改掃原始碼而非 strip 過的版本 |
+
+### M-21：檢查器最嚴重的一種失敗
+
+C4 原本只索引 class / enum / mixin / extension，**不含頂層函式**。
+所以呼叫一個未 import 的頂層函式時，八項檢查全數通過，
+卻在 `flutter test` 才炸——而且錯誤同時出現在兩個看似無關的測試檔，
+很難第一眼看出真因。
+
+**「檢查通過」給人的信心，正比於檢查的涵蓋範圍。**
+涵蓋範圍有洞而不自知，比沒有檢查更危險。
+
+修正時同時做了兩件事：
+1. C4 索引頂層函式（並用變異測試驗證）
+2. 把 `locationForFilter` 移進 `CrewFilter.toLocation()`——
+   它本來就是 CrewFilter 的行為，放在 router 才造成跨層依賴。
+   **正確的分層讓這個錯誤不可能發生**，比事後檢查更根本。
+
+收斂誤判時也學到：頂層符號不能收「變數」，只能收「函式」。
+`final router = GoRouter.of(context)` 這種區域變數會與頂層名稱撞名。
+
+### M-22：第三次被 shell 咬
+
+前兩次是 BSD sed/grep 不支援 `\s`。這次是 bash 3.2 在非 UTF-8 locale 下
+把 `$id（` 的高位元組吃進變數名，報成 `id?: unbound variable`——
+訊息完全看不出真因。
+
+**含 CJK 的檢查腳本一律用 Python。** 這條現在寫進 `CLAUDE.md`。
+
+## 第九輪：測試污染——全域可變單例
+
+| 編號 | 嚴重度 | 問題 | 修正 |
+|---|---|---|---|
+| M-24 | **BLOCKER** | `router` 是頂層單例，導覽位置全 process 共用。測試**單獨跑會過、一起跑會失敗** | 改為 `routerProvider`；新增 **C10** 檢查 |
+
+### 診斷過程值得記錄
+
+前兩輪我在只看到 stack trace 尾巴的情況下推論，修了兩個真實但無關的問題
+（EmptyStateView 橫向溢位、測試視窗尺寸）。第三輪才要到關鍵資訊：
+
+```
+flutter test --plain-name "沒有結果時顯示空狀態文案"   → All tests passed!
+flutter test --plain-name "點卡片可導覽到詳情頁"       → All tests passed!
+```
+
+**單獨跑都過、一起跑失敗** —— 這個訊號直接指向共用狀態，
+而且比任何 stack trace 都精確。
+
+### 根因
+
+```dart
+final router = GoRouter(initialLocation: '/', ...);   // 頂層單例
+```
+
+目前位置存在 router 裡面。搜尋測試呼叫 `context.replace('/?q=...')` 之後，
+那個位置留了下來，後面每個測試 boot 起來就已經停在被篩空的列表上。
+
+**這不只是測試問題。** 全域可變狀態意味著同一個 process 內的所有 App 實例
+共用導覽歷史——hot restart、多視窗、整合測試都會受影響。
+
+改成 `Provider` 之後每個 `ProviderScope` 各自持有，並在 `onDispose` 釋放。
+**這不是為了測試而做的妥協，是全域可變狀態本來就該避免。**
+
+### 教訓
+
+「單獨跑會過、一起跑會失敗」是共用狀態的特徵訊號。
+遇到測試失敗時，**先試單獨跑一次**——它能在三十秒內把問題分成兩類，
+比讀 stack trace 快得多。
+
+新增檢查 C10 涵蓋這一類（列舉已知會持有狀態的型別，避免噪音），
+並加了回歸測試 `NoGlobalNavState`：連續啟動兩次 App，第二次必須是乾淨的。
+
 ## 尚未覆蓋（誠實列出）
 
 - Golden test（視覺回歸）——需要先在 Mac 上產基準圖

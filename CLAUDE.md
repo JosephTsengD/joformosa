@@ -1,4 +1,4 @@
-# JoinCrew — 專案憲法
+# 揪Formosa — 專案憲法
 
 給 AI 協作者的必讀規則。違反這些規則的變更一律不予合併。
 
@@ -36,6 +36,24 @@ UI 狀態用 sealed class 顯式建模所有分支，用 switch 讓編譯器檢�
 - 每個驗收條件（spec 的 `Scenario:`）都必須有標記 `// @spec {id}/Scenario-{name}` 的測試
 - **不得**用 `skip` 讓測試通過
 - 改測試而不改實作 = BLOCKER
+
+## 分支
+`main` 永遠可部署。功能從 `dev` 切 `feat/T-xxx-描述`，PR 回 `dev`。
+見 `docs/BRANCHING.md`。
+
+## 規格生命週期
+`planned` → `spec_frozen` → `done`。
+`tool/spec_coverage.py` 只對 `spec_frozen` 生效，讓規劃師能提前寫規格。
+**凍結後不得為了配合實作而修改規格**——實作不了就回報 `spec_defect`。
+
+## 檢查腳本一律用 Python，不用 shell
+含 CJK 文字的 shell 腳本已經三次出錯：BSD sed/grep 不支援 `\s`（靜默失效）、
+bash 3.2 把全形字元吃進變數名。這些錯誤的共通點是**訊息看不出真因**。
+
+## 禁止頂層可變單例
+`final router = GoRouter(...)`、`final controller = StreamController()` 這類
+頂層宣告是全域可變狀態，整個 process 共用。一律改用 Provider。
+由 `tool/selfcheck.py` 的 C10 強制。
 
 ## 完成的定義
 `bash tool/harness.sh` 回傳 0。這是唯一標準，人與 AI 相同。

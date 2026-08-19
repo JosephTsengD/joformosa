@@ -16,9 +16,14 @@ import 'crew_card.dart';
 import 'crew_list_controller.dart';
 import 'crew_list_state.dart';
 import 'filter_sheet.dart';
+import 'search_field.dart';
 
 class DiscoveryScreen extends ConsumerStatefulWidget {
-  const DiscoveryScreen({super.key});
+  const DiscoveryScreen({super.key, this.initialFilter});
+
+  /// 從網址還原的初始篩選（含搜尋關鍵字）。
+  /// null 代表使用者是從 App 內導覽進來的，沿用 controller 現有狀態。
+  final CrewFilter? initialFilter;
 
   @override
   ConsumerState<DiscoveryScreen> createState() => _DiscoveryScreenState();
@@ -26,11 +31,20 @@ class DiscoveryScreen extends ConsumerStatefulWidget {
 
 class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
   final ScrollController _scroll = ScrollController();
+  bool _searchFocused = false;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+
+    final initial = widget.initialFilter;
+    if (initial != null && !initial.isEmpty) {
+      // 在第一幀之後套用：initState 期間不能改動其他 provider 的狀態
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(crewListProvider.notifier).applyFilter(initial);
+      });
+    }
   }
 
   @override
@@ -75,15 +89,33 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                 child: _FilterBar(
                   filter: ctrl.filter,
                   strings: s,
-                  onSportChanged: (Sport? sport) => ctrl.applyFilter(
+                  onSportChanged: (Sport? sport) => _apply(
                     sport == null
                         ? ctrl.filter.copyWith(clearSport: true)
                         : ctrl.filter.copyWith(sport: sport),
                   ),
                   onOpenSheet: () => _openFilterSheet(context, s),
+                  onQueryChanged: _onQueryChanged,
+                  onQuerySubmitted: _onQuerySubmitted,
+                  onSearchFocusChanged: (bool f) => setState(() => _searchFocused = f),
                 ),
               ),
             ),
+            if (_searchFocused && ctrl.filter.query.isEmpty)
+              SliverToBoxAdapter(
+                child: RecentSearchPanel(
+                  entries: ref.watch(recentSearchProvider),
+                  strings: s,
+                  onPick: (String q) {
+                    _onQueryChanged(q);
+                    _onQuerySubmitted(q);
+                    FocusScope.of(context).unfocus();
+                  },
+                  onRemove: (String q) =>
+                      ref.read(recentSearchProvider.notifier).remove(q),
+                  onClearAll: () => ref.read(recentSearchProvider.notifier).clear(),
+                ),
+              ),
             if (ref.watch(backendDegradedProvider))
               SliverToBoxAdapter(
                 child: StaleBanner(
@@ -185,13 +217,23 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
       CrewListEmpty(:final appliedFilter) => <Widget>[
           SliverFillRemaining(
             hasScrollBody: false,
-            child: EmptyStateView(
-              icon: Icons.search_off_rounded,
-              title: s.emptyNoResult,
-              hint: s.emptyNoResultHint,
-              actionLabel: appliedFilter.isEmpty ? null : s.filterClear,
-              onAction: appliedFilter.isEmpty ? null : ctrl.clearFilter,
-            ),
+            child: appliedFilter.query.isNotEmpty
+                // 搜尋落空時要說出「找不到什麼」。
+                // 通用文案會讓使用者以為是網站壞了，而不是關鍵字沒中。
+                ? EmptyStateView(
+                    icon: Icons.search_off_rounded,
+                    title: s.searchEmptyTitle(appliedFilter.query),
+                    hint: s.searchEmptyHint,
+                    actionLabel: s.searchClear,
+                    onAction: () => _onQueryChanged(''),
+                  )
+                : EmptyStateView(
+                    icon: Icons.search_off_rounded,
+                    title: s.emptyNoResult,
+                    hint: s.emptyNoResultHint,
+                    actionLabel: appliedFilter.isEmpty ? null : s.filterClear,
+                    onAction: appliedFilter.isEmpty ? null : ctrl.clearFilter,
+                  ),
           ),
         ],
       CrewListError(:final failure, :final cached) => cached != null
@@ -295,6 +337,23 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
         ),
       );
 
+  /// 套用篩選並把狀態寫進網址，讓使用者可以分享／收藏搜尋結果。
+  void _apply(CrewFilter next) {
+    ref.read(crewListProvider.notifier).applyFilter(next);
+    // replace 而非 push：篩選不該在返回鍵堆疊裡累積成幾十層
+    context.replace(next.toLocation());
+  }
+
+  void _onQueryChanged(String query) {
+    _apply(ref.read(crewListProvider.notifier).filter.copyWith(query: query));
+  }
+
+  /// 送出才記錄，不是每次輸入都記——否則「夜」「夜跑」「夜跑團」會存成三筆
+  void _onQuerySubmitted(String query) {
+    if (query.trim().isEmpty) return;
+    ref.read(recentSearchProvider.notifier).record(query);
+  }
+
   Future<void> _toggleFavorite(Crew crew, Strings s) async {
     final added = await ref.read(favoritesProvider.notifier).toggle(crew.id);
     if (!mounted) return;
@@ -333,12 +392,18 @@ class _FilterBar extends StatelessWidget {
     required this.strings,
     required this.onSportChanged,
     required this.onOpenSheet,
+    required this.onQueryChanged,
+    required this.onQuerySubmitted,
+    required this.onSearchFocusChanged,
   });
 
   final CrewFilter filter;
   final Strings strings;
   final void Function(Sport?) onSportChanged;
   final VoidCallback onOpenSheet;
+  final ValueChanged<String> onQueryChanged;
+  final ValueChanged<String> onQuerySubmitted;
+  final ValueChanged<bool> onSearchFocusChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -349,6 +414,16 @@ class _FilterBar extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Space.md),
       child: Column(
         children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
+            child: SearchField(
+              value: filter.query,
+              strings: strings,
+              onChanged: onQueryChanged,
+              onSubmitted: onQuerySubmitted,
+              onFocusChanged: onSearchFocusChanged,
+            ),
+          ),
           SizedBox(
             height: 42,
             child: ListView(
@@ -428,10 +503,14 @@ class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   _FilterHeaderDelegate({required this.child});
   final Widget child;
 
+  // 高度必須跟 _FilterBar 的實際內容一致：
+  // 搜尋列 40 + 間距 8 + 運動 chip 42 + 間距 8 + 縣市列 36 + 底部 12
+  static const _height = 152.0;
+
   @override
-  double get minExtent => 104;
+  double get minExtent => _height;
   @override
-  double get maxExtent => 104;
+  double get maxExtent => _height;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>

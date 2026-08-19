@@ -239,6 +239,16 @@ class CrewFilter {
         if (sort != CrewSort.score) 'sort': sort.name,
       };
 
+  /// 轉成可分享的網址路徑。
+  ///
+  /// 放在 domain 而非 router：這是 CrewFilter 自己的行為，
+  /// 而且純字串運算，不需要任何 Flutter 依賴，可以單獨測試。
+  String toLocation() {
+    final params = toQueryParams();
+    if (params.isEmpty) return '/';
+    return Uri(path: '/', queryParameters: params).toString();
+  }
+
   static CrewFilter fromQueryParams(Map<String, String> p) {
     final rawStyles = p['styles'];
     return CrewFilter(
