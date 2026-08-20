@@ -14,5 +14,12 @@ abstract interface class AuthRepository {
   /// 匿名 → LINE 的帳號升級。**必須保留既有收藏**（F-07 驗收條件）
   Future<Result<AppUser>> linkLine();
 
+  /// 處理 OAuth provider 導回的 callback。
+  ///
+  /// 放在 domain 介面而非讓 presentation 直接呼叫具體實作：
+  /// callback 畫面不該知道背後是 Supabase 還是別的東西。
+  /// 不支援的實作回傳 AuthFailure 即可。
+  Future<Result<AppUser>> completeExternalSignIn(Uri callback);
+
   Future<Result<void>> signOut();
 }

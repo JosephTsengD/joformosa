@@ -1,81 +1,156 @@
+import 'dart:convert';
 import 'dart:math';
 
-/// LINE Login 流程說明（實作於 Edge Function，見 supabase/functions/line-auth）
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// LINE Login v2.1（OAuth 2.0 + OpenID Connect）的客戶端部分。
 ///
-/// 為什麼不在 App 內直接換 token？
-/// ─────────────────────────────────────────────────────────────
-/// LINE 的 token endpoint 需要 `client_secret`。**任何放進 App 的密鑰都會被
-/// 反編譯取出**，所以正確做法是：
+/// 為什麼 token 交換不在這裡做
+/// ─────────────────────────────────────────────────────────
+/// LINE 的 token endpoint 需要 `channel_secret`。**任何進到前端的密鑰
+/// 都是公開的**——web 打開 DevTools 就看得到，App 反編譯也拿得到。
+/// 所以這個類別只負責「把使用者送去 LINE」與「驗證回來的東西」，
+/// 換 token 由 Edge Function 執行（見 supabase/functions/line-auth）。
 ///
 ///   App                      Edge Function            LINE
-///    │  ① 開瀏覽器 authorize   │                        │
+///    │  ① 整頁跳轉 authorize   │                        │
 ///    ├────────────────────────────────────────────────▶│
-///    │  ② redirect 帶 code     │                        │
+///    │  ② 導回 callback 帶 code│                        │
 ///    │◀────────────────────────────────────────────────┤
 ///    │  ③ POST {code,verifier} │                        │
 ///    ├────────────────────────▶│  ④ code + secret       │
 ///    │                         ├───────────────────────▶│
-///    │                         │  ⑤ id_token            │
-///    │                         │◀───────────────────────┤
-///    │                         │  ⑥ 驗簽 + 建立 Supabase │
-///    │  ⑦ Supabase session     │     使用者、簽發 JWT     │
-///    │◀────────────────────────┤                        │
-///
-/// 額外防護：
-/// · PKCE（code_verifier / code_challenge）防授權碼攔截
-/// · state 參數防 CSRF，且必須在 App 端比對
-/// · nonce 寫進 id_token，Edge Function 驗簽時比對
+///    │  ⑦ Supabase session     │  ⑤ id_token → ⑥ 驗簽    │
+///    │◀────────────────────────┤◀───────────────────────┤
 class LineAuthService {
-  LineAuthService({required this.channelId, required this.callbackScheme});
+  LineAuthService({
+    required this.channelId,
+    required this.redirectUri,
+    required SharedPreferences prefs,
+    Random? random,
+  })  : _prefs = prefs,
+        _random = random ?? Random.secure();
 
   final String channelId;
-  final String callbackScheme;
+
+  /// 必須與 LINE Developers Console 註冊的 Callback URL **完全一致**，
+  /// 包含結尾斜線。不一致時 LINE 直接回錯誤，且訊息不會告訴你差在哪。
+  final String redirectUri;
+
+  final SharedPreferences _prefs;
+  final Random _random;
 
   static const _authorizeUrl = 'https://access.line.me/oauth2/v2.1/authorize';
+  static const _pendingKey = 'line.pending.v1';
 
-  String get redirectUri => '$callbackScheme://login-callback';
-
-  LineAuthRequest buildRequest() {
+  /// 建立授權請求，並把 verifier / state / nonce 存起來。
+  ///
+  /// **一定要存。** web 是整頁跳轉，記憶體中的變數在導向 LINE 的那一刻
+  /// 就全部消失了，回來時是一個全新的 App 實例。
+  Future<LineAuthRequest> start() async {
     final verifier = _randomString(64);
     final state = _randomString(32);
     final nonce = _randomString(32);
-    final params = <String, String>{
-      'response_type': 'code',
-      'client_id': channelId,
-      'redirect_uri': redirectUri,
-      'state': state,
-      'scope': 'openid profile',
-      'nonce': nonce,
-      'code_challenge': _challengeOf(verifier),
-      'code_challenge_method': 'S256',
-      // 每次都顯示同意畫面，避免使用者換帳號時被靜默沿用
-      'prompt': 'consent',
-      'bot_prompt': 'normal',
-    };
-    final url = Uri.parse(_authorizeUrl).replace(queryParameters: params);
-    return LineAuthRequest(
+
+    final url = Uri.parse(_authorizeUrl).replace(
+      queryParameters: <String, String>{
+        'response_type': 'code',
+        'client_id': channelId,
+        'redirect_uri': redirectUri,
+        'state': state,
+        // openid + profile 不需要事前申請；email 才需要送審。
+        'scope': 'openid profile',
+        'nonce': nonce,
+        'code_challenge': challengeFor(verifier),
+        'code_challenge_method': 'S256',
+        'bot_prompt': 'normal',
+      },
+    );
+
+    final request = LineAuthRequest(
       authorizeUrl: url.toString(),
       codeVerifier: verifier,
       state: state,
       nonce: nonce,
     );
+
+    await _prefs.setString(
+      _pendingKey,
+      jsonEncode(<String, String>{
+        'verifier': verifier,
+        'state': state,
+        'nonce': nonce,
+      }),
+    );
+    return request;
   }
 
-  /// 從 callback URL 取出 code，並**比對 state**（防 CSRF）
-  String? extractCode(String callbackUrl, String expectedState) {
-    final uri = Uri.parse(callbackUrl);
-    if (uri.queryParameters['state'] != expectedState) return null;
-    return uri.queryParameters['code'];
+  /// PKCE 的 code_challenge：base64url(sha256(verifier))，**去掉結尾的 =**。
+  ///
+  /// RFC 7636 明確要求無 padding。留著 `=` 的話 LINE 會回
+  /// `invalid_grant`，而錯誤訊息不會提到 padding——這個坑很花時間。
+  static String challengeFor(String verifier) {
+    final digest = sha256.convert(utf8.encode(verifier));
+    return base64Url.encode(digest.bytes).replaceAll('=', '');
   }
 
-  // 生產環境請改用 crypto 套件的 sha256 + base64Url，
-  // 這裡為了維持零額外依賴而簡化（見 docs/tasks/T-081）
-  String _challengeOf(String verifier) => verifier;
+  /// 驗證 LINE 導回的網址。
+  ///
+  /// 回傳 sealed 型別而非拋例外：呼叫端必須處理每一種失敗，
+  /// 而「使用者按了取消」跟「state 不符（可能是攻擊）」需要完全不同的反應。
+  Future<LineCallbackResult> complete(Uri callback) async {
+    final raw = _prefs.getString(_pendingKey);
+    if (raw == null || raw.isEmpty) {
+      // 沒有待處理的流程卻收到 callback：可能是使用者直接貼網址，
+      // 也可能是有人試圖注入一個 code。兩種都不該繼續。
+      return const LineCallbackError(LineCallbackFailure.noPendingRequest);
+    }
 
-  static String _randomString(int len) {
+    final pending = jsonDecode(raw) as Map<String, dynamic>;
+    final params = callback.queryParameters;
+
+    if (params['error'] != null) {
+      await clearPending();
+      return LineCallbackError(
+        params['error'] == 'access_denied'
+            ? LineCallbackFailure.userCancelled
+            : LineCallbackFailure.providerError,
+      );
+    }
+
+    // state 比對是 CSRF 的唯一防線。不比對的話，攻擊者可以誘導你的
+    // 瀏覽器帶著**他的** code 回來，結果你登入了他的帳號。
+    if (params['state'] != pending['state']) {
+      await clearPending();
+      return const LineCallbackError(LineCallbackFailure.stateMismatch);
+    }
+
+    final code = params['code'];
+    if (code == null || code.isEmpty) {
+      await clearPending();
+      return const LineCallbackError(LineCallbackFailure.missingCode);
+    }
+
+    await clearPending();
+    return LineCallbackOk(
+      code: code,
+      codeVerifier: pending['verifier'] as String,
+      nonce: pending['nonce'] as String,
+    );
+  }
+
+  Future<void> clearPending() async => _prefs.remove(_pendingKey);
+
+  bool get hasPendingRequest => (_prefs.getString(_pendingKey) ?? '').isNotEmpty;
+
+  String _randomString(int length) {
+    // RFC 7636 的 unreserved 字元集
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-    final r = Random.secure();
-    return List<String>.generate(len, (_) => chars[r.nextInt(chars.length)]).join();
+    return List<String>.generate(
+      length,
+      (_) => chars[_random.nextInt(chars.length)],
+    ).join();
   }
 }
 
@@ -91,4 +166,33 @@ class LineAuthRequest {
   final String codeVerifier;
   final String state;
   final String nonce;
+}
+
+enum LineCallbackFailure {
+  noPendingRequest,
+  userCancelled,
+  providerError,
+  stateMismatch,
+  missingCode,
+}
+
+sealed class LineCallbackResult {
+  const LineCallbackResult();
+}
+
+final class LineCallbackOk extends LineCallbackResult {
+  const LineCallbackOk({
+    required this.code,
+    required this.codeVerifier,
+    required this.nonce,
+  });
+
+  final String code;
+  final String codeVerifier;
+  final String nonce;
+}
+
+final class LineCallbackError extends LineCallbackResult {
+  const LineCallbackError(this.reason);
+  final LineCallbackFailure reason;
 }

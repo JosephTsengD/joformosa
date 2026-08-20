@@ -55,7 +55,7 @@ class _FilterSheetState extends State<FilterSheet> {
             const SizedBox(height: Space.xl),
             Row(
               children: <Widget>[
-                Text(s.filterCity,
+                Text(s.filterWhen,
                     style: AppText.subtitle.copyWith(color: c.textPrimary)),
                 const Spacer(),
                 TextButton(
@@ -67,6 +67,29 @@ class _FilterSheetState extends State<FilterSheet> {
                 ),
               ],
             ),
+            const SizedBox(height: Space.md),
+            Wrap(
+              spacing: Space.sm,
+              runSpacing: Space.sm,
+              children: TimeWindow.values
+                  .map(
+                    (TimeWindow w) => FilterChipButton(
+                      label: switch (w) {
+                        TimeWindow.any => s.whenAny,
+                        TimeWindow.today => s.whenToday,
+                        TimeWindow.thisWeek => s.whenThisWeek,
+                        TimeWindow.weekend => s.whenWeekend,
+                      },
+                      selected: _draft.timeWindow == w,
+                      onTap: () => setState(
+                        () => _draft = _draft.copyWith(timeWindow: w),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: Space.xl),
+            Text(s.filterCity, style: AppText.subtitle.copyWith(color: c.textPrimary)),
             const SizedBox(height: Space.md),
             Wrap(
               spacing: Space.sm,

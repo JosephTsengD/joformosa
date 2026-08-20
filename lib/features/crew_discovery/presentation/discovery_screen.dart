@@ -98,6 +98,8 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                   onQueryChanged: _onQueryChanged,
                   onQuerySubmitted: _onQuerySubmitted,
                   onSearchFocusChanged: (bool f) => setState(() => _searchFocused = f),
+                  onTimeWindowToggled: (TimeWindow w) =>
+                      _apply(ctrl.filter.copyWith(timeWindow: w)),
                 ),
               ),
             ),
@@ -395,6 +397,7 @@ class _FilterBar extends StatelessWidget {
     required this.onQueryChanged,
     required this.onQuerySubmitted,
     required this.onSearchFocusChanged,
+    required this.onTimeWindowToggled,
   });
 
   final CrewFilter filter;
@@ -404,6 +407,7 @@ class _FilterBar extends StatelessWidget {
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onQuerySubmitted;
   final ValueChanged<bool> onSearchFocusChanged;
+  final ValueChanged<TimeWindow> onTimeWindowToggled;
 
   @override
   Widget build(BuildContext context) {
@@ -469,6 +473,25 @@ class _FilterBar extends StatelessWidget {
                     color: filter.city != null ? c.textOnAccent : c.textSecondary,
                   ),
                   onTap: onOpenSheet,
+                ),
+                const SizedBox(width: Space.sm),
+                // 「這週末」是最高頻的意圖，直接放在主列，
+                // 不要求使用者先打開篩選面板。
+                FilterChipButton(
+                  label: s.whenWeekend,
+                  selected: filter.timeWindow == TimeWindow.weekend,
+                  leading: Icon(
+                    Icons.weekend_outlined,
+                    size: 14,
+                    color: filter.timeWindow == TimeWindow.weekend
+                        ? c.textOnAccent
+                        : c.textSecondary,
+                  ),
+                  onTap: () => onTimeWindowToggled(
+                    filter.timeWindow == TimeWindow.weekend
+                        ? TimeWindow.any
+                        : TimeWindow.weekend,
+                  ),
                 ),
                 const SizedBox(width: Space.sm),
                 FilterChipButton(

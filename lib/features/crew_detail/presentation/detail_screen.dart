@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/l10n/strings.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/failure.dart';
+import '../../../core/utils/calendar_link.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/primitives.dart';
 import '../../crew_discovery/domain/entities.dart';
@@ -152,7 +154,7 @@ class CrewDetailScreen extends ConsumerWidget {
                     session: sess,
                     now: now,
                     strings: s,
-                    onRemind: () => _remind(context, s),
+                    onAddToCalendar: () => _addToCalendar(context, s, sess, crew.name),
                   ),
                 ),
               const SizedBox(height: Space.md),
@@ -387,10 +389,24 @@ class CrewDetailScreen extends ConsumerWidget {
         ),
       );
 
-  void _remind(BuildContext context, Strings s) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(s.remind)));
+  Future<void> _addToCalendar(
+    BuildContext context,
+    Strings s,
+    Session session,
+    String crewName,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final url = CalendarLink.googleCalendarUrl(
+      session: session,
+      crewName: crewName,
+    );
+
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      messenger.showSnackBar(SnackBar(content: Text(s.calendarAdded)));
+    } on Object catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.calendarFailed)));
+    }
   }
 
   /// 深連結直接進入時（無列表堆疊），返回要回探索頁而不是退出 App（F-04）

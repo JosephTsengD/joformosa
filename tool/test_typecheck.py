@@ -39,8 +39,8 @@ MUTATIONS = [
     # 加上 const 反而是合法的 Dart。
     ('const 引數是區域變數', 'T9',
      'lib/features/auth/data/fake_auth_repository.dart',
-     'return Ok<AppUser>(u);\n  }\n\n  @override\n  Future<Result<void>> signOut()',
-     'return const Ok<AppUser>(u);\n  }\n\n  @override\n  Future<Result<void>> signOut()'),
+     'return Ok<AppUser>(u);\n  }\n\n  @override\n  Future<Result<AppUser>> completeExternalSignIn',
+     'return const Ok<AppUser>(u);\n  }\n\n  @override\n  Future<Result<AppUser>> completeExternalSignIn'),
     # 真實案例：supabase_flutter 轉出的 gotrue Session 與 domain 的 Session 撞名。
     # 編譯器的錯誤訊息指向 domain 的 import 行，看起來像是我們的檔案有問題。
     ('第三方套件與專案型別撞名', 'T10',

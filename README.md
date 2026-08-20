@@ -2,6 +2,12 @@
 
 Flutter 三平台（Android / iOS / Web）單一程式碼庫。
 離線優先、深連結可分享、支援團長自助上稿與 LINE 登入。
+
+> **致敬與聲明**
+> 本專案的產品概念參考自 [joindui.tw](https://joindui.tw)（揪隊）。
+> 這是一個獨立的技術學習專案，與該站**無任何隸屬關係**。
+> 所有資料為程式產生的合成資料，未使用其商標、視覺、文案或資料庫內容。
+
 ---
 
 ## 這個專案想證明什麼
@@ -30,6 +36,7 @@ Flutter 三平台（Android / iOS / Web）單一程式碼庫。
 5. **[`docs/TEST_AUDIT.md`](docs/TEST_AUDIT.md)** — 自我審查報告與已知風險
 6. **[`docs/DEPLOY.md`](docs/DEPLOY.md)** — 部署上線（GitHub Pages / Cloudflare / 家用網路）
 7. **[`docs/PRODUCTION.md`](docs/PRODUCTION.md)** — 開放真實使用者前的檢查清單
+8. **[`docs/LINE_SETUP.md`](docs/LINE_SETUP.md)** — LINE 登入設定步驟
 
 ## 兩種執行模式
 

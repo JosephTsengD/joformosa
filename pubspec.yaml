@@ -20,6 +20,10 @@ dependencies:
   shared_preferences: ">=2.2.3 <3.0.0"
   # 後端：Postgres + Auth + Storage + Edge Functions
   supabase_flutter: ">=2.5.6 <3.0.0"
+  # PKCE 的 SHA-256。自己實作雜湊是最典型的錯誤示範。
+  crypto: ">=3.0.0 <4.0.0"
+  # LINE 授權頁的整頁跳轉（web 用 _self，行動裝置開系統瀏覽器）
+  url_launcher: ">=6.2.0 <7.0.0"
 
 dev_dependencies:
   flutter_test:

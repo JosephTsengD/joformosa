@@ -7,6 +7,7 @@ import '../core/config/app_config.dart';
 import '../core/l10n/strings.dart';
 import '../core/utils/clock.dart';
 import '../features/auth/data/fake_auth_repository.dart';
+import '../features/auth/data/line_auth_service.dart';
 import '../features/auth/data/supabase_auth_repository.dart';
 import '../features/auth/domain/auth_models.dart';
 import '../features/auth/domain/auth_repository.dart';
@@ -81,9 +82,22 @@ final crewRepositoryProvider = Provider<CrewRepository>((Ref ref) {
   );
 });
 
+final lineAuthServiceProvider = Provider<LineAuthService?>((Ref ref) {
+  if (!AppConfig.hasLineLogin) return null;
+  return LineAuthService(
+    channelId: AppConfig.lineChannelId,
+    redirectUri: AppConfig.lineRedirectUri,
+    prefs: ref.watch(sharedPrefsProvider),
+  );
+});
+
 final authRepositoryProvider = Provider<AuthRepository>((Ref ref) {
   if (!AppConfig.hasSupabase) return FakeAuthRepository();
-  return SupabaseAuthRepository(sb.Supabase.instance.client.auth);
+  return SupabaseAuthRepository(
+    sb.Supabase.instance.client.auth,
+    line: ref.watch(lineAuthServiceProvider),
+    client: sb.Supabase.instance.client,
+  );
 });
 
 final authStateProvider = StreamProvider<AppUser?>(

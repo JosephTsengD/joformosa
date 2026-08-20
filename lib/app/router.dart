@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/auth/presentation/line_callback_screen.dart';
 import '../features/auth/presentation/profile_screen.dart';
 import '../features/auth/presentation/sign_in_screen.dart';
 import '../features/crew_admin/presentation/admin_screen.dart';
@@ -42,6 +43,13 @@ GoRouter _createRouter() => GoRouter(
         GoRoute(
           path: '/me',
           builder: (BuildContext _, GoRouterState __) => const ProfileScreen(),
+        ),
+        GoRoute(
+          // LINE 導回的落點。必須與 LINE Developers Console 的
+          // Callback URL 完全一致（含 base-href 前綴）。
+          path: '/auth/line',
+          builder: (BuildContext _, GoRouterState state) =>
+              LineCallbackScreen(callbackUri: state.uri),
         ),
         GoRoute(
           path: '/sign-in',

@@ -28,6 +28,7 @@ class SupabaseCrewRepository implements CrewRepository {
 
   @override
   Stream<Result<CrewPage>> watchCrews(CrewFilter f, {Cursor? after}) async* {
+    final range = f.timeWindow.rangeFor(_clock.now());
     try {
       // 用 RPC 而非 client 端迴圈：LATERAL JOIN 一次取回「下一場」。
       // 在 client 端跑迴圈的話，20 張卡片就是 21 次網路往返。
@@ -39,6 +40,10 @@ class SupabaseCrewRepository implements CrewRepository {
           'p_tags':
               f.styles.isEmpty ? null : f.styles.map((StyleTag s) => s.code).toList(),
           'p_query': f.query.isEmpty ? null : f.query,
+          // 送出具體區間而非 'weekend' 這種語意字串。
+          // 「週末從哪天開始」只在 Dart 定義一次，SQL 不需要知道。
+          'p_from': range?.start.toUtc().toIso8601String(),
+          'p_to': range?.end.toUtc().toIso8601String(),
           'p_limit': _pageSize,
           'p_after_score': after?.afterScore,
           'p_after_id': after?.afterId,

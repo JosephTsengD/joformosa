@@ -41,6 +41,14 @@ class Strings {
   String filterResultCount(int n) => _zh ? '查看 $n 個結果' : 'Show $n results';
   String filterActive(int n) => _zh ? '篩選 $n' : 'Filters $n';
 
+  String get whenAny => _zh ? '不限時間' : 'Any time';
+  String get whenToday => _zh ? '今天' : 'Today';
+  String get whenThisWeek => _zh ? '本週' : 'This week';
+  String get whenWeekend => _zh ? '這週末' : 'Weekend';
+  String get filterWhen => _zh ? '時間' : 'When';
+  String get calendarAdded => _zh ? '已開啟行事曆' : 'Opening calendar';
+  String get calendarFailed => _zh ? '無法開啟行事曆' : 'Could not open calendar';
+
   String get sortByScore => _zh ? '活躍度' : 'Activity';
   String get sortByNext => _zh ? '最近開團' : 'Next session';
 
@@ -93,6 +101,25 @@ class Strings {
   String get signInWithLine => _zh ? '使用 LINE 登入' : 'Continue with LINE';
   String get signInBenefit =>
       _zh ? '登入後可收藏社團、設定活動提醒，並在換裝置時同步。' : 'Sign in to save crews and sync.';
+  String get lineSigningIn => _zh ? '正在完成登入…' : 'Signing you in…';
+
+  /// 把技術性的失敗代碼翻成使用者看得懂、而且**知道下一步該做什麼**的話。
+  /// 直接顯示 state_mismatch 對使用者毫無意義。
+  String lineErrorHint(String reason) => switch (reason) {
+        'stateMismatch' => _zh
+            ? '這次登入的驗證資訊不符，為了安全已中止。請重新登入一次。'
+            : 'Verification failed for security reasons. Please sign in again.',
+        'noPendingRequest' =>
+          _zh ? '找不到進行中的登入流程。請回到登入頁重新開始。' : 'No sign-in in progress. Please start again.',
+        'missingCode' =>
+          _zh ? 'LINE 沒有回傳授權碼，請重新登入一次。' : 'LINE did not return an authorization code.',
+        'line_not_configured' =>
+          _zh ? '這個環境尚未設定 LINE 登入。' : 'LINE login is not configured in this environment.',
+        'exchange_failed' =>
+          _zh ? '無法完成登入，請稍後再試。' : 'Could not complete sign-in. Please try again.',
+        _ => _zh ? '登入未完成，請再試一次。' : 'Sign-in did not complete.',
+      };
+
   String get signOut => _zh ? '登出' : 'Sign out';
   String get browseAsGuest => _zh ? '先逛逛就好' : 'Browse as guest';
   String get guestUser => _zh ? '訪客' : 'Guest';

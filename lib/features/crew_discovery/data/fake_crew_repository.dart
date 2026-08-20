@@ -62,6 +62,13 @@ class FakeCrewRepository implements CrewRepository {
   bool _matches(Crew c, CrewFilter f) {
     if (f.sport != null && c.sport != f.sport) return false;
     if (f.city != null && c.city != f.city) return false;
+    // 時間區間看的是「有沒有任何一場落在區間內」，
+    // 不是只看 nextSession——某團可能今天沒場次但週末有兩場。
+    final range = f.timeWindow.rangeFor(_clock.now());
+    if (range != null &&
+        !_sessionsOf(c.id).any((Session s) => range.contains(s.startsAt))) {
+      return false;
+    }
     if (f.styles.isNotEmpty && !f.styles.every(c.styles.contains)) return false;
     if (f.query.isNotEmpty) {
       final q = f.query.toLowerCase();

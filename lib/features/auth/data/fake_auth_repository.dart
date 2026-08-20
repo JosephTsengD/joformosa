@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/utils/failure.dart';
 import '../../../core/utils/id_gen.dart';
 import '../../../core/utils/result.dart';
 import '../domain/auth_models.dart';
@@ -70,6 +71,10 @@ class FakeAuthRepository implements AuthRepository {
     _emit(u);
     return Ok<AppUser>(u);
   }
+
+  @override
+  Future<Result<AppUser>> completeExternalSignIn(Uri callback) async =>
+      const Err<AppUser>(AuthFailure(reason: 'line_not_configured'));
 
   @override
   Future<Result<void>> signOut() async {

@@ -26,6 +26,13 @@ abstract final class AppConfig {
   static const lineCallbackScheme =
       String.fromEnvironment('LINE_CALLBACK_SCHEME', defaultValue: 'joformosa');
 
+  /// LINE Developers Console 註冊的 Callback URL，必須**完全一致**。
+  /// 用 dart-define 而非寫死：本機、GitHub Pages、自訂網域各不相同。
+  static const lineRedirectUri = String.fromEnvironment(
+    'LINE_REDIRECT_URI',
+    defaultValue: 'http://localhost:5555/auth/line',
+  );
+
   /// 強制使用本地合成資料（開發、離線、或後端還沒架好時）
   static const forceFakeBackend =
       bool.fromEnvironment('USE_FAKE_BACKEND', defaultValue: false);

@@ -14,13 +14,13 @@ class SessionTile extends StatelessWidget {
     required this.now,
     required this.strings,
     super.key,
-    this.onRemind,
+    this.onAddToCalendar,
   });
 
   final Session session;
   final DateTime now;
   final Strings strings;
-  final VoidCallback? onRemind;
+  final VoidCallback? onAddToCalendar;
 
   @override
   Widget build(BuildContext context) {
@@ -91,13 +91,13 @@ class SessionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (!isPast && onRemind != null)
+              if (!isPast && onAddToCalendar != null)
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: strings.remind,
-                  onPressed: onRemind,
+                  tooltip: strings.addToCalendar,
+                  onPressed: onAddToCalendar,
                   icon: Icon(
-                    Icons.notifications_none_rounded,
+                    Icons.event_available_outlined,
                     size: 19,
                     color: c.textTertiary,
                   ),
